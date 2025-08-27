@@ -1,5 +1,7 @@
 use std::collections::HashSet;
 
+use aoclib::{CombinationsOf, Permutations};
+
 fn main() {
     let records = aoclib::read_text_records("input/everybody_codes_e2_q01_p1.txt");
     // let records = aoclib::read_text_records("input/test-part-1.txt");
@@ -33,12 +35,71 @@ fn main() {
         max_total += max_score;
     }
     println!("part 2 = {max_total}");
+
+    let records = aoclib::read_text_records("input/everybody_codes_e2_q01_p3.txt");
+    // let records = aoclib::read_text_records("input/test-part-3-1.txt");
+    let gridlines = records[0].split('\n').collect::<Vec<_>>();
+    let grid = Grid::new(&gridlines);
+
+    let slots = (0..(grid.cols + 1) / 2).map(|c| c * 2).collect::<Vec<_>>();
+    let mut coins = Vec::new();
+    for coin in records[1].split('\n') {
+        let seq = Direction::sequence(coin);
+        let mut won = Vec::new();
+        for slot in &slots {
+            won.push(grid.toss_coin(&seq, *slot));
+        }
+        coins.push(Coin { _seq: seq, won });
+    }
+    let mut min_score = i64::MAX;
+    let mut max_score = 0;
+    for combo in slots.combinations_of(coins.len()) {
+        for perm in combo.permutations() {
+            let score = perm
+                .iter()
+                .map(|p| (p / 2) as usize)
+                .enumerate()
+                .map(|(coin, index)| coins[coin].won[index])
+                .sum::<i64>();
+            min_score = min_score.min(score);
+            max_score = max_score.max(score);
+        }
+    }
+    println!("part 3 = {min_score} {max_score}");
+}
+
+#[derive(Debug)]
+struct Coin {
+    _seq: Vec<Direction>,
+    won: Vec<i64>,
 }
 
 #[derive(Debug)]
 enum Direction {
     Left,
     Right,
+}
+
+impl Direction {
+    fn adjust(&self, mut pos: i64, low: i64, high: i64) -> i64 {
+        match self {
+            Self::Left => {
+                if pos > low {
+                    pos -= 1;
+                } else {
+                    pos += 1;
+                }
+            }
+            Self::Right => {
+                if pos < high - 1 {
+                    pos += 1;
+                } else {
+                    pos -= 1;
+                }
+            }
+        }
+        pos
+    }
 }
 
 impl Direction {
@@ -81,29 +142,11 @@ impl Grid {
 
         for row in 0..self.rows {
             if self.grid.contains(&(row, pos)) {
-                let dir = bounce.next().unwrap();
-                match dir {
-                    Direction::Left => {
-                        if pos > 0 {
-                            pos -= 1;
-                        } else {
-                            pos += 1;
-                        }
-                    }
-                    Direction::Right => {
-                        if pos < self.cols - 1 {
-                            pos += 1;
-                        } else {
-                            pos -= 1;
-                        }
-                    }
-                }
+                pos = bounce.next().unwrap().adjust(pos, 0, self.cols);
             }
-            // println!("row: {row:2} | {pos}");
         }
         let final_slot_number = pos / 2 + 1;
         0.max(final_slot_number * 2 - toss_slot_number)
-        // println!("{toss_slot_number:2} | {final_slot_number:2} | {coins_won:2}");
     }
 
     fn _print(&self) {
