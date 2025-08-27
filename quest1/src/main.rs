@@ -17,6 +17,22 @@ fn main() {
             })
             .sum::<i64>()
     );
+
+    let records = aoclib::read_text_records("input/everybody_codes_e2_q01_p2.txt");
+    let gridlines = records[0].split('\n').collect::<Vec<_>>();
+    let grid = Grid::new(&gridlines);
+
+    let mut max_total = 0;
+    for coin in records[1].split('\n') {
+        let mut pos = 0;
+        let mut max_score = 0;
+        while pos < grid.cols {
+            max_score = max_score.max(grid.toss_coin(&Direction::sequence(coin), pos));
+            pos += 2;
+        }
+        max_total += max_score;
+    }
+    println!("part 2 = {max_total}");
 }
 
 #[derive(Debug)]
