@@ -3,5 +3,13 @@
 version = 4
 
 [[package]]
+name = "aoclib"
+version = "0.1.0"
+source = "git+https://github.com/UncleScientist/aoclib-rs.git#027fa39b205286ee5c652ede45f511ad240957dd"
+
+[[package]]
 name = "quest1"
 version = "0.1.0"
+dependencies = [
+ "aoclib",
+]
