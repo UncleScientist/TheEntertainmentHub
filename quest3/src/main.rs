@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 
 fn main() {
     let lines = aoclib::read_lines("input/everybody_codes_e2_q03_p1.txt");
@@ -36,6 +39,69 @@ fn main() {
         }
     }
     println!("part 2 = {}", finish.join(","));
+
+    // let records = aoclib::read_text_records("input/test-part-3-2.txt");
+    let records = aoclib::read_text_records("input/everybody_codes_e2_q03_p3.txt");
+    let mut dice: Vec<Die> = records[0]
+        .split('\n')
+        .map(|line| line.parse().unwrap())
+        .collect();
+
+    let mut grid = HashMap::<(i64, i64), i64>::new();
+    for (row, line) in records[1].split('\n').enumerate() {
+        for (col, ch) in line.chars().enumerate() {
+            let val = (ch as u8 - b'0') as i64;
+            grid.insert((row as i64, col as i64), val);
+        }
+    }
+    /*
+    let rows = records[1].split('\n').count();
+    for row in 0..rows {
+        for col in 0..100 {
+            if let Some(val) = grid.get(&(row as i64, col as i64)) {
+                print!("{val}");
+            } else {
+                break;
+            }
+        }
+        println!();
+    }
+    */
+
+    let mut visited: HashSet<(i64, i64)> = HashSet::new();
+    for die in dice.iter_mut() {
+        let next_num = die.roll();
+        let mut positions = grid
+            .iter()
+            .filter(|(_, num)| **num == next_num)
+            .map(|(pos, _)| *pos)
+            .collect::<Vec<_>>();
+        while !positions.is_empty() {
+            visited.extend(positions.iter().copied());
+            let next_num = die.roll();
+            let mut next_positions = Vec::new();
+            let mut check_pos = HashSet::new();
+            for pos in positions {
+                check_pos.extend(&[
+                    pos,
+                    (pos.0 + 1, pos.1),
+                    (pos.0 - 1, pos.1),
+                    (pos.0, pos.1 + 1),
+                    (pos.0, pos.1 - 1),
+                ]);
+            }
+
+            for c in check_pos {
+                if let Some(val) = grid.get(&c)
+                    && next_num == *val
+                {
+                    next_positions.push(c);
+                }
+            }
+            positions = next_positions;
+        }
+    }
+    println!("part 3 = {}", visited.len());
 }
 
 #[derive(Debug)]
