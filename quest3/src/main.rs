@@ -11,11 +11,36 @@ fn main() {
         score += dice.iter_mut().map(|die| die.roll()).sum::<i64>();
     }
     println!("part 1 = {rolls}");
+
+    let records = aoclib::read_text_records("input/everybody_codes_e2_q03_p2.txt");
+    let mut dice: Vec<(usize, Die)> = records[0]
+        .split('\n')
+        .map(|line| (0, line.parse().unwrap()))
+        .collect();
+    let track: Vec<i64> = records[1]
+        .chars()
+        .map(|ch| (ch as u8 - b'0') as i64)
+        .collect();
+    let mut on_track = dice.len();
+    let mut finish = Vec::new();
+    while on_track > 0 {
+        for die_pos in dice.iter_mut().filter(|(pos, _)| *pos < track.len()) {
+            let roll = die_pos.1.roll();
+            if roll == track[die_pos.0] {
+                die_pos.0 += 1;
+                if die_pos.0 >= track.len() {
+                    on_track -= 1;
+                    finish.push(format!("{}", die_pos.1.id));
+                }
+            }
+        }
+    }
+    println!("part 2 = {}", finish.join(","));
 }
 
 #[derive(Debug)]
 struct Die {
-    _id: usize,
+    id: usize,
     faces: Vec<i64>,
     seed: usize,
     roll_number: usize,
@@ -57,7 +82,7 @@ impl FromStr for Die {
         let roll_number = 1;
 
         Ok(Self {
-            _id,
+            id: _id,
             faces,
             seed,
             roll_number,
